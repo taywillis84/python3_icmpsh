@@ -46,29 +46,16 @@ echo ""
 echo -e "\e[00;32m##################################################################\e[00m"
 
 echo ""
-IP=""
+IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 
-if [ -n "$INTERFACE" ]; then
-    IP=$(ip -4 -o addr show dev "$INTERFACE" scope global 2>/dev/null | awk '{split($4, a, "/"); print a[1]; exit}')
-    if [ -z "$IP" ]; then
-        echo -e "\e[01;31m[!]\e[00m Could not determine an IPv4 address for interface '$INTERFACE'."
-        exit 1
-    fi
-else
-    IP=$(hostname -I 2>/dev/null | awk '{print $1}')
-
-    if [ -z "$IP" ]; then
-        IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')
-    fi
-
-    if [ -z "$IP" ]; then
-        echo -e "\e[01;31m[!]\e[00m Could not determine local IPv4 address automatically."
-        echo -e "\e[01;31m[!]\e[00m Re-run with -i <interface> to choose the correct one."
-        exit 1
-    fi
+if [ -z "$IP" ]; then
+    IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')
 fi
 
-echo -e "\e[01;32m[-]\e[00m Using local IP address: $IP${INTERFACE:+ (interface: $INTERFACE)}"
+if [ -z "$IP" ]; then
+    echo -e "\e[01;31m[!]\e[00m Could not determine local IPv4 address automatically."
+    exit 1
+fi
 echo -e "\e[1;31m-------------------------------------------------------------------\e[00m"
 echo -e "\e[01;31m[?]\e[00m What is the victims public IP address?"
 echo -e "\e[1;31m-------------------------------------------------------------------\e[00m"
