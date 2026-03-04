@@ -2,6 +2,39 @@
 # icmp shell script
 # Daniel Compton
 # 05/2013
+
+usage() {
+    echo "Usage: $0 [-i interface]"
+    echo ""
+    echo "Options:"
+    echo "  -i, --interface IFACE   Use a specific local interface (e.g. tun0, eth0)"
+    echo "  -h, --help              Show this help message"
+}
+
+INTERFACE=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -i|--interface)
+            if [ -z "$2" ]; then
+                echo -e "\e[01;31m[!]\e[00m Missing value for $1"
+                usage
+                exit 1
+            fi
+            INTERFACE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo -e "\e[01;31m[!]\e[00m Unknown argument: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
 echo ""
 echo ""
 echo -e "\e[00;32m##################################################################\e[00m"
@@ -61,4 +94,3 @@ if [ "$ICMPDIS" = "disabled" ]
 fi
 
 exit 0
-

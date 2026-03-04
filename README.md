@@ -36,6 +36,14 @@ sysctl -w net.ipv4.icmp_echo_ignore_all=1
 
 If you miss doing that, you will receive information from the slave, but the slave is unlikely to receive commands send from the master.
 
+When using `run.sh`, you can now force the local interface used to derive the source IP:
+
+```
+./run.sh -i tun0
+```
+
+If `-i` is not provided, the script attempts auto-detection as before.
+
 ### Running the slave
 
 The slave comes with a few command line options as outlined below:
