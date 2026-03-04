@@ -53,7 +53,12 @@ Allowing traffic only onto known machines, ports and services (ingress filtering
 
 <h3>Running the master</h3>
 
-<p>The master is straight forward to use. There are no extra libraries required for the C and Python versions. The Perl master however has the following dependencies:</p>
+<p>The master is straight forward to use. There are no extra libraries required for the C and Python versions. The Python implementation in this repository has been updated for Python 3 and can be started with:</p>
+
+<pre><code>sudo python3 icmpsh_m.py -t &lt;target-ip&gt;
+</code></pre>
+
+<p>The Perl master however has the following dependencies:</p>
 
 <ul>
 <li>IO::Socket</li>
