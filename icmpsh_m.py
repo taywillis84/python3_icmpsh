@@ -19,6 +19,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import ipaddress
 import os
 import select
 import socket
@@ -34,6 +35,29 @@ def setNonBlocking(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFL)
     flags = flags | os.O_NONBLOCK
     fcntl.fcntl(fd, fcntl.F_SETFL, flags)
+
+def _normalize_ipv4(value, arg_name):
+    """
+    Normalize and validate a user-provided IPv4 value.
+    """
+
+    candidate = value.strip()
+
+    # Accept hostnames as input (e.g. from scripts) and resolve to IPv4.
+    try:
+        candidate = socket.gethostbyname(candidate)
+    except socket.gaierror:
+        pass
+
+    try:
+        parsed = ipaddress.ip_address(candidate)
+    except ValueError:
+        raise ValueError("invalid %s '%s'. Expected an IPv4 address or resolvable hostname" % (arg_name, value))
+
+    if parsed.version != 4:
+        raise ValueError("invalid %s '%s'. Only IPv4 is supported" % (arg_name, value))
+
+    return str(parsed)
 
 def main(src, dst):
     if sys.platform.startswith('win'):
@@ -137,4 +161,8 @@ if __name__ == '__main__':
         sys.stderr.write(msg)
         sys.exit(1)
 
-    main(sys.argv[1], sys.argv[2])
+    try:
+        main(sys.argv[1], sys.argv[2])
+    except ValueError as ex:
+        sys.stderr.write('%s\n' % ex)
+        sys.exit(1)
