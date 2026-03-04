@@ -60,9 +60,6 @@ def _normalize_ipv4(value, arg_name):
     return str(parsed)
 
 def main(src, dst):
-    src = _normalize_ipv4(src, 'source IP address')
-    dst = _normalize_ipv4(dst, 'destination IP address')
-
     if sys.platform.startswith('win'):
         sys.stderr.write('icmpsh master can only run on Posix systems\n')
         sys.exit(255)
